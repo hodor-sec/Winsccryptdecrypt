@@ -45,8 +45,8 @@ Correctly update the path to the static OpenSSL development libraries.
 
 **Encrypter x86 on Windows**
 
-```cl -MT -I C:\tools\vcpkg\packages\openssl_x86-windows-static\include Demoencrypt/Demoencrypt.c /link /LIBPATH:C:\tools\vcpkg\packages\openssl_x86-windows-static\lib libssl.lib libcrypto.lib /OPT:REF /OPT:ICF /RELEASE /PDB:none /NOLOGO```
+```cl -MT -I C:\tools\vcpkg\packages\openssl_x86-windows-static\include Winsccrypt/Winsccrypt.c /link /LIBPATH:C:\tools\vcpkg\packages\openssl_x86-windows-static\lib libssl.lib libcrypto.lib /OPT:REF /OPT:ICF /RELEASE /PDB:none /NOLOGO```
 
 **Encrypter x64 on Windows**
 
-```cl -MT -I C:\tools\vcpkg\packages\openssl_x64-windows-static\include Demoencrypt/Demoencrypt.c /link /LIBPATH:C:\tools\vcpkg\packages\openssl_x64-windows-static\lib libssl.lib libcrypto.lib /OPT:REF /OPT:ICF /RELEASE /PDB:none /NOLOGO```
+```cl -MT -I C:\tools\vcpkg\packages\openssl_x64-windows-static\include Winsccrypt/Winsccrypt.c /link /LIBPATH:C:\tools\vcpkg\packages\openssl_x64-windows-static\lib libssl.lib libcrypto.lib /OPT:REF /OPT:ICF /RELEASE /PDB:none /NOLOGO```

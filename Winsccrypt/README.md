@@ -23,6 +23,26 @@ You will need to enter the output variables in a decrypter program for the paylo
 To compile this program, you will need the OpenSSL libraries linked and available in your development environment.
 Correctly update the path to the OpenSSL development libraries, as it currently assumes ```c:\tools\vcpkg```.
 
+## Install VCPKG
+
+**Download and setup vcpkg**
+
+```mkdir c:\tools;cd c:\tools```
+
+```git clone https://github.com/microsoft/vcpkg.git```
+
+```cd vcpkg```
+
+```bootstrap-vcpkg.bat```
+
+```vcpkg integrate install```
+
+**Install openssl static libs**
+
+```vcpkg install openssl:x64-windows-static```
+
+```vcpkg install openssl:x86-windows-static```
+
 ## Usage
 **Basic Usage**
 

